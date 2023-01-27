@@ -1,6 +1,7 @@
 import datetime
 import time
 
+import pymysql
 import twitter
 
 from util import read_json
@@ -16,6 +17,8 @@ class TwitterBot:
         self.auth = None
         self.api = None
 
+        self.con = None
+
     def start(self):
         self.api = twitter.Api(
             consumer_key=self.data["api_key"],
@@ -23,6 +26,9 @@ class TwitterBot:
             access_token_key=self.data["access_token"],
             access_token_secret=self.data["access_token_secret"]
         )
+
+        self.con = pymysql.connect(host='localhost', user='root', password='September 19th, 2022 q!w@e#r$5678',
+                                   db='LOA', charset='utf8')
 
         datetime.timezone(datetime.timedelta(seconds=32400))
 
@@ -45,8 +51,13 @@ class TwitterBot:
             # 주말 모험섬 공지 - 07:00
             if day == 5 or day == 6:
                 if now.hour == 7 and now.minute == 0 and now.second == 0:
-                    island = ["하모니 섬", "죽음의 협곡", "고요한 안식의 섬", "하모니 섬", "죽음의 협곡", "고요한 안식의 섬"],
-                    reward = ["카드", "실링", "골드", "카드", "실링", "골드"],
+                    cur = self.con.cursor()
+                    sql = f"SELECT `ISLAND`, `REWARD` FROM ADVENTURE_ISLAND WHERE `ID` = {now.strftime('%Y%m%d')};"
+                    cur.execute(sql)
+                    rows = cur.fetchall()
+
+                    island = rows[0][0].split(',')
+                    reward = rows[0][1].split(',')
 
                     link = get_adventure_island(island, reward, True)
                     self.post_image(link, now.strftime("%Y-%m-%d") + message[day] + "\n등장하는 모험섬 정보>")
@@ -54,8 +65,13 @@ class TwitterBot:
             # 평일 모험섬 공지 - 09:00
             else:
                 if now.hour == 9 and now.minute == 9 and now.second == 0:
-                    island = ["하모니 섬", "죽음의 협곡", "고요한 안식의 섬", "하모니 섬", "죽음의 협곡", "고요한 안식의 섬"],
-                    reward = ["카드", "실링", "골드", "카드", "실링", "골드"],
+                    cur = self.con.cursor()
+                    sql = f"SELECT `ISLAND`, `REWARD` FROM ADVENTURE_ISLAND WHERE `ID` = {now.strftime('%Y%m%d')};"
+                    cur.execute(sql)
+                    rows = cur.fetchall()
+
+                    island = rows[0][0].split(',')
+                    reward = rows[0][1].split(',')
 
                     link = get_adventure_island(island, reward, False)
                     self.post_image(link, now.strftime("%Y-%m-%d") + message[day] + "\n등장하는 모험섬 정보>")
@@ -64,9 +80,9 @@ class TwitterBot:
         if self.api is None:
             self.start()
 
-        account = "@conie_zoa"
-        statuses = self.api.GetUserTimeline(screen_name=account, count=10)
-        print(statuses)
+        # account = "@conie_zoa"
+        # statuses = self.api.GetUserTimeline(screen_name=account, count=10)
+        # print(statuses)
 
         # self.api.update_status("test")
 

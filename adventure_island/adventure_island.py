@@ -56,10 +56,10 @@ def get_adventure_island(island, reward, double=False):
 
         # paste content
         for i in range(3):
-            island_image = Image.open(f'data/island/{island[i]}.jpg')
+            island_image = Image.open(f'adventure_island/data/island/{island[i]}.jpg')
             island_image = island_image.resize(island_size)
 
-            reward_image = Image.open(f'data/reward/{reward[i]}.jpg')
+            reward_image = Image.open(f'adventure_island/data/reward/{reward[i]}.jpg')
             reward_image = reward_image.resize(reward_size)
 
             new_image = Image.new('RGB', content_size)
@@ -75,7 +75,7 @@ def get_adventure_island(island, reward, double=False):
         x, y = (title_size[0] - w) / 2, (title_size[1] - h) / 2
         drawable_image.text((x, y), title, fill=font_color, font=font)
 
-    link = f'data/today/{now.strftime("%Y%m%d")}.jpg'
+    link = f'adventure_island/data/today/{now.strftime("%Y%m%d")}.jpg'
     image.save(link)
 
     # return image
