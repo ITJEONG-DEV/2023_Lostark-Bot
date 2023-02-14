@@ -60,7 +60,7 @@ class TwitterBot:
             "\n".join([" 월요일 컨텐츠>", "- 카오스 게이트", "- 모험섬"]),
             "\n".join([" 화요일 컨텐츠>", "- 필드보스", "- 유령선", "- 모험섬"]),
             "\n".join([" 로요일 컨텐츠>", "- 모험섬", "- 툴루비크 전장"]),
-            "\n".join([" 목요일 컨텐츠>", "- 카오스 게이트", "- 유령선", "모험섬"]),
+            "\n".join([" 목요일 컨텐츠>", "- 카오스 게이트", "- 유령선", "- 모험섬"]),
             "\n".join([" 금요일 컨텐츠>", "- 필드보스", "- 모험섬"]),
             "\n".join([" 토요일 컨텐츠>", "- 카오스 게이트", "- 유령선", "- 모험섬(오전/오후)", "- 툴루비크 전장"]),
             "\n".join([" 일요일 컨텐츠>", "- 카오스 게이트", "- 필드보스", "- 모험섬(오전/오후)", "- 툴루비크 전장"]),
@@ -80,7 +80,7 @@ class TwitterBot:
                     reward = result[1].split(',')
 
                     link = get_adventure_island(island, reward, True)
-                    self.post_image(link, now.strftime("%Y-%m-%d") + message[day] + "\n등장하는 모험섬 정보>")
+                    self.post_image(link, now.strftime("%Y-%m-%d") + message[day] + "\n\n등장하는 모험섬 정보>")
 
             # 평일 모험섬 공지 - 09:00
             else:
@@ -91,7 +91,7 @@ class TwitterBot:
                     reward = result[1].split(',')
 
                     link = get_adventure_island(island, reward, False)
-                    self.post_image(link, now.strftime("%Y-%m-%d") + message[day] + "\n등장하는 모험섬 정보>")
+                    self.post_image(link, now.strftime("%Y-%m-%d") + message[day] + "\n\n등장하는 모험섬 정보>")
 
     def test(self):
         if self.api is None:
@@ -131,4 +131,4 @@ class TwitterBot:
         media = self.api.media_upload(image_path)
 
         self.api.update_status(status=message, media_ids=[media.media_id])
-        print("다음의 내용을 트윗합니다. " + message + ", " + media.media_id)
+        print(f"다음의 내용을 트윗합니다. {message}, {media.media_id}")
