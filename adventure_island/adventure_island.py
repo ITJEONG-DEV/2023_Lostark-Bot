@@ -127,9 +127,9 @@ def get_item_color(grade: str):
 
 window_size = (1024, 512)
 icon_size = (64, 64)
-title_font = ImageFont.truetype("C:/USERS/DEV2/APPDATA/LOCAL/MICROSOFT/WINDOWS/FONTS/NANUMBARUNGOTHICBOLD.TTF", size=40)
-time_font = ImageFont.truetype("C:/USERS/DEV2/APPDATA/LOCAL/MICROSOFT/WINDOWS/FONTS/NANUMBARUNGOTHIC.TTF", size=32)
-island_font = ImageFont.truetype("C:/USERS/DEV2/APPDATA/LOCAL/MICROSOFT/WINDOWS/FONTS/NANUMBARUNGOTHIC.TTF", size=28)
+title_font = ImageFont.truetype(f"{path}/data/resource/NANUMBARUNGOTHICBOLD.TTF", size=40)
+time_font = ImageFont.truetype(f"{path}/data/resource//NANUMBARUNGOTHIC.TTF", size=32)
+island_font = ImageFont.truetype(f"{path}/data/resource//NANUMBARUNGOTHIC.TTF", size=28)
 item_color = (50, 50, 50)
 
 background_color = (0, 0, 0)
