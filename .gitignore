@@ -152,4 +152,5 @@ cython_debug/
 .idea/
 
 # data
-data/
+/data/
+/adventure_island/data/today/*
