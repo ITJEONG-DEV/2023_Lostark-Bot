@@ -217,28 +217,52 @@ def add_island_reward_schedule(date, time, island, reward):
         print(e)
 
 
+def get_adventure_island_reward_info(date, time):
+    global con
+    if not con.begin():
+        con = connect()
+
+    cur = con.cursor()
+
+    # 해당하는 시간대의 모험섬 등장 정보 가져오기
+    sql = f"SELECT * FROM `ISLAND_SCHEDULE` WHERE `APPEAR_DATE` = '{date}' AND `PART_TIME` = {time};"
+    cur.execute(sql)
+    result = cur.fetchall()
+
+    island = [item[-1] for item in result]
+
+    reward_dict = {}
+
+    if len(result) > 0:
+        for name in island:
+            # 변동 보상 추가
+            sql = f"SELECT `ISLAND_REWARD_SCHEDULE`.`REWARD_NAME`, `REWARD_ITEM`.`ITEM_GRADE` AS `ITEM_GRADE` FROM `ISLAND_REWARD_SCHEDULE` JOIN `REWARD_ITEM` ON `REWARD_ITEM`.`REWARD_NAME` = `ISLAND_REWARD_SCHEDULE`.`REWARD_NAME`  WHERE `ISLAND_REWARD_SCHEDULE`.`APPEAR_DATE` = '{date}' AND `ISLAND_REWARD_SCHEDULE`.`PART_TIME` = {time} AND `ISLAND_REWARD_SCHEDULE`.`ISLAND_NAME` = '{name}';"
+            cur.execute(sql)
+            result = cur.fetchall()
+
+            result = list(result)
+            result.reverse()
+
+            reward_dict[name] = [item for item in result]
+
+            # 고정 보상 추가
+            sql = f"SELECT `ISLAND_REWARD_CONST`.`REWARD_NAME_` AS `REWARD_NAME`, `REWARD_ITEM`.`ITEM_GRADE` AS `ITEM_GRADE` FROM `ISLAND_REWARD_CONST` JOIN `REWARD_ITEM` ON `REWARD_ITEM`.`REWARD_NAME` = `ISLAND_REWARD_CONST`.`REWARD_NAME_` WHERE `ISLAND_REWARD_CONST`.`ISLAND_NAME_` = '{name}';"
+            cur.execute(sql)
+            result = cur.fetchall()
+
+            for item in result:
+                reward_dict[name].append(item)
+
+            # 중복체크
+            if reward_dict[name].count(('실링', '일반')) == 2:
+                reward_dict[name].remove(('실링', '일반'))
+
+        return list(reward_dict.items())
+
+    else:
+        return None
+
+
 if __name__ == "__main__":
     print("hi")
-    print(check_reward_item_const_available(island="기회의 섬", reward="실링"))
-
-    # result = check_reward_item_available("스노우팡 아일랜드 섬의 마음")
-    # print(result)
-    #
-    # result = check_reward_item_available("골드")
-    # print(result)
-    #
-    # result = add_reward_item_const("골드", "https://cdn-lostark.game.onstove.com/EFUI_IconAtlas/Money/Money_4.png")
-    #
-    # result = check_reward_item_available("골드")
-    # print(result)
-
-    #
-    # result = add_adventure_island_const("스노우팡 아일랜드",
-    #                                     "https://cdn-lostark.game.onstove.com/EFUI_IconAtlas/Island_Icon/Island_Icon_98.png")
-    # print(result)
-    #
-    # result = check_adventure_island_available("스노우팡 아일랜드")
-    # print(result)
-
-    # result = add_adventure_island_schedule('스노우팡 아일랜드', '2203-03-11', '0');
-    # print(result)
+    print(get_advendure_island_info(date="2023-03-11", time="0"))

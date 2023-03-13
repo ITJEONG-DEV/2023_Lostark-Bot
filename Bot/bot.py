@@ -5,10 +5,13 @@ import pymysql
 import tweepy
 
 from util import read_json
+from adventure_island import *
+
 
 class TwitterBot:
     def __init__(self):
         self.data = read_json("./data/key.json")["twitter"]
+        self.lostark = read_json("./data/key.json")["lostark"]
 
         self.auth = None
         self.api = None
@@ -69,59 +72,33 @@ class TwitterBot:
             now = datetime.datetime.now()
             day = now.weekday()
 
-            # 주말 모험섬 공지 - 08:00
-            if day == 5 or day == 6:
-                if now.hour == 8 and now.minute == 0 and now.second == 0:
-                    result = self.get_adventure_island_information(now.strftime('%Y%m%d'))
-
-                    island = result[0].split(',')
-                    reward = result[1].split(',')
-
-                    link = get_adventure_island(island, reward, True)
-                    self.post_image(link, now.strftime("%Y-%m-%d") + message[day] + "\n\n등장하는 모험섬 정보>")
-
-            # 평일 모험섬 공지 - 09:00
-            else:
-                if now.hour == 9 and now.minute == 0 and now.second == 0:
-                    result = self.get_adventure_island_information(now.strftime('%Y%m%d'))
-
-                    island = result[0].split(',')
-                    reward = result[1].split(',')
-
-                    link = get_adventure_island(island, reward, False)
-                    self.post_image(link, now.strftime("%Y-%m-%d") + message[day] + "\n\n등장하는 모험섬 정보>")
+            if now.hour == 8 and now.minute == 0 and now.second == 0:
+                parse_adventure_island(authorization=f"Bearer {self.lostark['api_key']}")
+                link = get_adventure_island(now.strftime('%Y-%m-%d'), day >= 5)
+                self.post_image(link, now.strftime("%Y-%m-%d") + message[day] + "\n\n등장하는 모험섬 정보>")
 
     def test(self):
         if self.api is None:
             self.start()
 
         message = [
-                "\n".join([" 월요일 컨텐츠>", "- 카오스 게이트", "- 모험섬"]),
-                "\n".join([" 화요일 컨텐츠>", "- 필드보스", "- 유령선", "- 모험섬"]),
-                "\n".join([" 로요일 컨텐츠>", "- 모험섬", "- 툴루비크 전장"]),
-                "\n".join([" 목요일 컨텐츠>", "- 카오스 게이트", "- 유령선", "모험섬"]),
-                "\n".join([" 금요일 컨텐츠>", "- 필드보스", "- 모험섬"]),
-                "\n".join([" 토요일 컨텐츠>", "- 카오스 게이트", "- 유령선", "- 모험섬(오전/오후)", "- 툴루비크 전장"]),
-                "\n".join([" 일요일 컨텐츠>", "- 카오스 게이트", "- 필드보스", "- 모험섬(오전/오후)", "- 툴루비크 전장"]),
-            ]
+            "\n".join([" 월요일 컨텐츠>", "- 카오스 게이트", "- 모험섬"]),
+            "\n".join([" 화요일 컨텐츠>", "- 필드보스", "- 유령선", "- 모험섬"]),
+            "\n".join([" 로요일 컨텐츠>", "- 모험섬", "- 툴루비크 전장"]),
+            "\n".join([" 목요일 컨텐츠>", "- 카오스 게이트", "- 유령선", "모험섬"]),
+            "\n".join([" 금요일 컨텐츠>", "- 필드보스", "- 모험섬"]),
+            "\n".join([" 토요일 컨텐츠>", "- 카오스 게이트", "- 유령선", "- 모험섬(오전/오후)", "- 툴루비크 전장"]),
+            "\n".join([" 일요일 컨텐츠>", "- 카오스 게이트", "- 필드보스", "- 모험섬(오전/오후)", "- 툴루비크 전장"]),
+        ]
 
-        while True:
-            time.sleep(1)
+        time.sleep(1)
 
-            now = datetime.datetime.now()
-            day = now.weekday()
+        now = datetime.datetime.now()
+        day = now.weekday()
 
-            if now.hour == 23 and now.minute == 38 and now.second == 2:
-
-                result = self.get_adventure_island_information(now.strftime('%Y%m%d'))
-
-                island = result[0].split(',')
-                reward = result[1].split(',')
-
-                link = get_adventure_island(island, reward, False)
-                self.post_image(link, "테스트용 예약 트윗)\n" + now.strftime("%Y-%m-%d") + message[day] + "\n등장하는 모험섬 정보>")
-
-                break
+        parse_adventure_island(authorization=f"Bearer {self.lostark['api_key']}")
+        link = get_adventure_island(now.strftime('%Y-%m-%d'), day >= 5)
+        self.post_image(link, now.strftime("%Y-%m-%d") + message[day] + "\n\n등장하는 모험섬 정보>")
 
         print("탈출")
 
@@ -129,4 +106,4 @@ class TwitterBot:
         media = self.api.media_upload(image_path)
 
         self.api.update_status(status=message, media_ids=[media.media_id])
-        print(f"다음의 내용을 트윗합니다. {message}, {media.media_id}")
+        print(f"다음의 내용을 트윗합니다.\n{message}, {media.media_id}")

@@ -7,6 +7,8 @@ import os
 import datetime
 import requests
 
+path = os.path.join(os.path.dirname(os.path.abspath(__file__)))
+
 
 def get_adventure_island_info(authorization):
     request_url = "https://developer-lostark.game.onstove.com/gamecontents/calendar"
@@ -84,20 +86,22 @@ def parse_adventure_island(authorization):
 
                 # 모험섬 보상 스케쥴 존재 여부 확인 후, 모험섬 보상 스케쥴 추가
                 for time in reward_time:
-                    if not check_island_reward_schedule_available(date=time[0], time=time[1], island=item["ContentsName"], reward=reward["Name"]):
-                        add_island_reward_schedule(date=time[0], time=time[1], island=item["ContentsName"], reward=reward["Name"])
+                    if not check_island_reward_schedule_available(date=time[0], time=time[1],
+                                                                  island=item["ContentsName"], reward=reward["Name"]):
+                        add_island_reward_schedule(date=time[0], time=time[1], island=item["ContentsName"],
+                                                   reward=reward["Name"])
 
     print("[Done] parsing adventure island information")
 
 
-
-
 # 파일이 있는지 확인하고, 없다면 다운로드 받아서 반환
-def get_image(dir: str, name: str):
-    if not os.path.isfile(f'{dir}/{name}.png'):
+def get_image(name: str):
+    name = name.replace(":", "")
+
+    if not os.path.isfile(f'{path}/data/resource/{name}.png'):
         print("download request")
 
-    return Image.open(f'{dir}/{name}.png').convert("RGBA")
+    return Image.open(f'{path}/data/resource/{name}.png').convert("RGBA")
 
 
 # 일반 고급 희귀 영웅 전설 유물 고대 에스더
@@ -153,7 +157,7 @@ def make_rewards_box(rewards: [], grades: []):
 
         reward_back = Image.new('RGBA', icon_size, get_item_color(grade))
 
-        reward_image = get_image(f'data/reward', reward)
+        reward_image = get_image(reward)
         reward_image = reward_image.resize(icon_size)
 
         start_x, start_y = (icon_size[0] + icon_gap) * i, 0
@@ -168,7 +172,7 @@ def make_island_box(island: str, rewards: [], grades: []):
     island_box = Image.new('RGBA', (width, height), background_color)
 
     # island
-    island_image = get_image(f'data/island', island)
+    island_image = get_image(island)
     island_image = island_image.resize(icon_size)
 
     island_box.paste(island_image, (margin, margin), island_image)
@@ -194,7 +198,7 @@ def make_island_boxes(island_rewards_infoes: [[]]):
     for i in range(len(island_rewards_infoes)):
         item = island_rewards_infoes[i]
 
-        island_box = make_island_box(item[0], item[1], item[2])
+        island_box = make_island_box(item[0], [it[0] for it in item[1]], [it[-1] for it in item[1]])
         start_x, start_y = 0, (icon_size[1] + content_gap) * i
         island_boxes.paste(island_box, (start_x, start_y), island_box)
 
@@ -256,10 +260,30 @@ def make_daily_adventure_island(island_rewards_infoes: [[]], date_text):
     return daily_adventure_island_content
 
 
+def get_adventure_island(date, is_weekend):
+    reward_items = []
+
+    if not is_weekend:
+        reward_items = get_adventure_island_reward_info(date, 0)
+
+    else:
+        reward_items = get_adventure_island_reward_info(date, 0) + get_adventure_island_reward_info(date, 1)
+
+    image = make_daily_adventure_island(reward_items, f"{date} 모험섬 일정")
+    # link = f'./adventure_island/data/today/{date}.png'
+    link = f'{path}/data/today/{date}.png'
+    image.save(link)
+
+    return link
+
+
 if __name__ == "__main__":
-    path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
-    api_key = read_json(path + "/data/key.json")["lostark"]["api_key"]
-    parse_adventure_island(authorization=f"Bearer {api_key}")
+    print("hi")
+    #path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
+    #api_key = read_json(path + "/data/key.json")["lostark"]["api_key"]
+    #parse_adventure_island(authorization=f"Bearer {api_key}")
+
+    # print(get_adventure_island('2023-03-11', False))
     # image = get_adventure_island(
     #     island=["하모니 섬", "죽음의 협곡", "고요한 안식의 섬", "하모니 섬", "죽음의 협곡", "고요한 안식의 섬"],
     #     reward=["카드", "실링", "골드", "카드", "실링", "골드"],
