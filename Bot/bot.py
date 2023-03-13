@@ -5,12 +5,10 @@ import pymysql
 import tweepy
 
 from util import read_json
-from adventure_island import get_adventure_island
-
 
 class TwitterBot:
     def __init__(self):
-        self.data = read_json("./data/key.json")
+        self.data = read_json("./data/key.json")["twitter"]
 
         self.auth = None
         self.api = None

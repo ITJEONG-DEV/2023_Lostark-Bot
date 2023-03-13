@@ -1,87 +1,95 @@
 import datetime
 from PIL import Image, ImageDraw, ImageFont
 
+from sql.sql import *
+
 import os
+import datetime
+import requests
 
 
-# island = [ "하모니 섬", "죽음의 협곡", "고요한 안식의 섬" ]
-# reward = [ "카드", "실링", "골드" ]
-def get_adventure_island(island, reward, double=False):
-    title_size = (460 * 3, 120)
-    island_size = (460, 290)
-    reward_size = (460, 260)
-    content_size = (460, 290 + 260)
+def get_adventure_island_info(authorization):
+    request_url = "https://developer-lostark.game.onstove.com/gamecontents/calendar"
 
-    now = datetime.datetime.now()
-    font = ImageFont.truetype("C:/USERS/DEV2/APPDATA/LOCAL/MICROSOFT/WINDOWS/FONTS/NANUMBARUNGOTHICBOLD.TTF", size=16)
-    background_color = (0, 0, 0)
-    font_color = (255, 255, 255)
+    response = requests.get(request_url, headers={'accept': 'application/json', 'authorization': authorization})
 
-    if double:
-        width = title_size[0]
-        height = (title_size[1] + island_size[1] + reward_size[1]) * 2
+    adventure_island_list = []
 
-        image = Image.new('RGB', (width, height), background_color)
+    for item in response.json():
+        if item["CategoryName"] == "모험 섬":
+            adventure_island_list.append(item)
 
-        for j in range(2):
-            # paste content
-            for i in range(3):
-                island_image = Image.open(f'data/island/{island[i + j * 3]}.jpg')
-                island_image = island_image.resize(island_size)
+    return adventure_island_list
 
-                reward_image = Image.open(f'data/reward/{reward[i + j * 3]}.jpg')
-                reward_image = reward_image.resize(reward_size)
 
-                new_image = Image.new('RGB', content_size)
-                new_image.paste(island_image, (0, 0))
-                new_image.paste(reward_image, (0, 290))
+def parse_adventure_island(authorization):
+    item_list = get_adventure_island_info(authorization)
 
-                image.paste(new_image, (460 * i, title_size[1] + int(height / 2 * j)))
+    for item in item_list:
+        # 기본 모험섬 정보를 체크한다
+        if not check_adventure_island_available(name=item["ContentsName"]):
+            # 기본 모험섬 정보 추가
+            add_adventure_island_const(name=item["ContentsName"], url=item["ContentsIcon"])
 
-            # add title
-            drawable_image = ImageDraw.Draw(image)
-            title = now.strftime("%Y-%m-%d") + " 모험섬"
-            if j == 0:
-                title += " 오전 타임 (09:00/11:00/13:00)"
-            elif j == 1:
-                title += " 오후 타임 (19:00/21:00/23:00)"
+        # 모험섬 출연 시간 확인(평일/주말-오전/주말-오후 등)
+        start_time = []
+        for time in item["StartTimes"]:
+            date = datetime.datetime.strptime(time, "%Y-%m-%dT%H:%M:%S")
 
-            w, h = drawable_image.textsize(title, font=font)
-            x, y = (title_size[0] - w) / 2, (title_size[1] + height * j - h) / 2
-            drawable_image.text((x, y), title, fill=font_color, font=font)
+            # weekend
+            if date.weekday() >= 5:
+                if date.hour <= 18:
+                    start_time.append((date.strftime("%Y-%m-%d"), 0))
+                else:
+                    start_time.append((date.strftime("%Y-%m-%d"), 1))
+            else:
+                start_time.append((date.strftime("%Y-%m-%d"), 0))
 
-    else:
-        width = title_size[0]
-        height = (title_size[1] + island_size[1] + reward_size[1])
+        start_time = set(start_time)
 
-        image = Image.new('RGBA', (width, height), background_color)
+        # 섬 출연 정보를 DB에 추가한다
+        for time in start_time:
+            if not check_island_schedule_available(name=item["ContentsName"], date=time[0], time=time[1]):
+                add_adventure_island_schedule(name=item["ContentsName"], date=time[0], time=time[1])
 
-        # paste content
-        for i in range(3):
-            island_image = Image.open(f'adventure_island/data/island/{island[i]}.jpg')
-            island_image = island_image.resize(island_size)
+        # 모험섬 보상을 체크한다
+        for reward in item["RewardItems"]:
 
-            reward_image = Image.open(f'adventure_island/data/reward/{reward[i]}.jpg')
-            reward_image = reward_image.resize(reward_size)
+            # 아이템 확인
+            if not check_reward_item_available(reward["Name"]):
+                # 아이템 정보 추가
+                add_reward_item_const(name=reward["Name"], url=reward["Icon"], grade=reward["Grade"])
 
-            new_image = Image.new('RGB', content_size)
-            new_image.paste(island_image, (0, 0))
-            new_image.paste(reward_image, (0, 290))
+            # 기본 보상인지 확인한다
+            if reward["StartTimes"] is None:
+                if not check_reward_item_const_available(island=item["ContentsName"], reward=reward["Name"]):
+                    # 기본 보상 정보 추가
+                    add_default_reward_item(island=item["ContentsName"], reward=reward["Name"])
 
-            image.paste(new_image, (460 * i, title_size[1]))
+            else:
+                reward_time = []
+                for time in reward["StartTimes"]:
+                    date = datetime.datetime.strptime(time, "%Y-%m-%dT%H:%M:%S")
 
-        # add title
-        drawable_image = ImageDraw.Draw(image)
-        title = now.strftime("%Y-%m-%d") + " 모험섬 (11:00/13:00/19:00/21:00/23:00)"
-        w, h = drawable_image.textsize(title, font=font)
-        x, y = (title_size[0] - w) / 2, (title_size[1] - h) / 2
-        drawable_image.text((x, y), title, fill=font_color, font=font)
+                    # weekend
+                    if date.weekday() >= 5:
+                        if date.hour <= 18:
+                            reward_time.append((date.strftime("%Y-%m-%d"), 0))
+                        else:
+                            reward_time.append((date.strftime("%Y-%m-%d"), 1))
+                    else:
+                        reward_time.append((date.strftime("%Y-%m-%d"), 0))
 
-    link = f'adventure_island/data/today/{now.strftime("%Y%m%d")}.jpg'
-    image.save(link)
+                reward_time = set(reward_time)
 
-    # return image
-    return link
+                # 모험섬 보상 스케쥴 존재 여부 확인 후, 모험섬 보상 스케쥴 추가
+                for time in reward_time:
+                    if not check_island_reward_schedule_available(date=time[0], time=time[1], island=item["ContentsName"], reward=reward["Name"]):
+                        add_island_reward_schedule(date=time[0], time=time[1], island=item["ContentsName"], reward=reward["Name"])
+
+    print("[Done] parsing adventure island information")
+
+
 
 
 # 파일이 있는지 확인하고, 없다면 다운로드 받아서 반환
@@ -90,6 +98,7 @@ def get_image(dir: str, name: str):
         print("download request")
 
     return Image.open(f'{dir}/{name}.png').convert("RGBA")
+
 
 # 일반 고급 희귀 영웅 전설 유물 고대 에스더
 # 회색 초록 파랑 보라 금색 빨강 하양 하늘색
@@ -193,7 +202,8 @@ def make_island_boxes(island_rewards_infoes: [[]]):
 
 
 def make_island_content(island_rewards_infoes: [[]], time_text):
-    width, height = 1024 - icon_size[0] * 2 + margin * 2, icon_size[1] * 3 + content_gap * 2 + icon_size[1] * 2 + margin * 6
+    width, height = 1024 - icon_size[0] * 2 + margin * 2, icon_size[1] * 3 + content_gap * 2 + icon_size[
+        1] * 2 + margin * 6
     island_content = Image.new('RGBA', (width, height))
 
     # text
@@ -247,6 +257,9 @@ def make_daily_adventure_island(island_rewards_infoes: [[]], date_text):
 
 
 if __name__ == "__main__":
+    path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
+    api_key = read_json(path + "/data/key.json")["lostark"]["api_key"]
+    parse_adventure_island(authorization=f"Bearer {api_key}")
     # image = get_adventure_island(
     #     island=["하모니 섬", "죽음의 협곡", "고요한 안식의 섬", "하모니 섬", "죽음의 협곡", "고요한 안식의 섬"],
     #     reward=["카드", "실링", "골드", "카드", "실링", "골드"],
@@ -254,21 +267,21 @@ if __name__ == "__main__":
     # )
 
     # image.show()
-    make_daily_adventure_island([
-        ["스노우팡 아일랜드", ["전설 ~ 고급 카드 팩", "영혼의 잎사귀", "인연의 돌", "실링"], ["전설", "고급", "희귀", "일반"]],
-        ["기회의 섬", ["전설 ~ 고급 카드 팩", "영혼의 잎사귀", "인연의 돌", "해적 주화", "실링"], ["전설", "고급", "희귀", "일반", "일반"]],
-        ["스노우팡 아일랜드", ["전설 ~ 고급 카드 팩", "영혼의 잎사귀", "인연의 돌", "해적 주화", "실링"], ["전설", "고급", "희귀", "일반", "일반"]]
-    ], "2023-03-11 모험섬 일정") \
-    .save("D:/평일_테스트1.png")
-    #.show()
+    # make_daily_adventure_island([
+    #     ["스노우팡 아일랜드", ["전설 ~ 고급 카드 팩", "영혼의 잎사귀", "인연의 돌", "실링"], ["전설", "고급", "희귀", "일반"]],
+    #     ["기회의 섬", ["전설 ~ 고급 카드 팩", "영혼의 잎사귀", "인연의 돌", "해적 주화", "실링"], ["전설", "고급", "희귀", "일반", "일반"]],
+    #     ["스노우팡 아일랜드", ["전설 ~ 고급 카드 팩", "영혼의 잎사귀", "인연의 돌", "해적 주화", "실링"], ["전설", "고급", "희귀", "일반", "일반"]]
+    # ], "2023-03-11 모험섬 일정") \
+    #     .save("D:/평일_테스트1.png")
+    # .show()
 
-    make_daily_adventure_island([
-        ["스노우팡 아일랜드", ["전설 ~ 고급 카드 팩", "영혼의 잎사귀", "인연의 돌", "실링"], ["전설", "고급", "희귀", "일반"]],
-        ["기회의 섬", ["전설 ~ 고급 카드 팩", "영혼의 잎사귀", "인연의 돌", "해적 주화", "실링"], ["전설", "고급", "희귀", "일반", "일반"]],
-        ["스노우팡 아일랜드", ["전설 ~ 고급 카드 팩", "영혼의 잎사귀", "인연의 돌", "해적 주화", "실링"], ["전설", "고급", "희귀", "일반", "일반"]],
-        ["스노우팡 아일랜드", ["전설 ~ 고급 카드 팩", "영혼의 잎사귀", "인연의 돌", "실링"], ["전설", "고급", "희귀", "일반"]],
-        ["기회의 섬", ["전설 ~ 고급 카드 팩", "영혼의 잎사귀", "인연의 돌", "해적 주화", "실링"], ["전설", "고급", "희귀", "일반", "일반"]],
-        ["스노우팡 아일랜드", ["전설 ~ 고급 카드 팩", "영혼의 잎사귀", "인연의 돌", "해적 주화", "실링"], ["전설", "영웅", "희귀", "고급", "일반"]],
-    ], "2023-03-11 모험섬 일정") \
-    .save("D:/주말_테스트1.png")
-    #.show()
+    # make_daily_adventure_island([
+    #     ["스노우팡 아일랜드", ["전설 ~ 고급 카드 팩", "영혼의 잎사귀", "인연의 돌", "실링"], ["전설", "고급", "희귀", "일반"]],
+    #     ["기회의 섬", ["전설 ~ 고급 카드 팩", "영혼의 잎사귀", "인연의 돌", "해적 주화", "실링"], ["전설", "고급", "희귀", "일반", "일반"]],
+    #     ["스노우팡 아일랜드", ["전설 ~ 고급 카드 팩", "영혼의 잎사귀", "인연의 돌", "해적 주화", "실링"], ["전설", "고급", "희귀", "일반", "일반"]],
+    #     ["스노우팡 아일랜드", ["전설 ~ 고급 카드 팩", "영혼의 잎사귀", "인연의 돌", "실링"], ["전설", "고급", "희귀", "일반"]],
+    #     ["기회의 섬", ["전설 ~ 고급 카드 팩", "영혼의 잎사귀", "인연의 돌", "해적 주화", "실링"], ["전설", "고급", "희귀", "일반", "일반"]],
+    #     ["스노우팡 아일랜드", ["전설 ~ 고급 카드 팩", "영혼의 잎사귀", "인연의 돌", "해적 주화", "실링"], ["전설", "영웅", "희귀", "고급", "일반"]],
+    # ], "2023-03-11 모험섬 일정") \
+    #     .save("D:/주말_테스트1.png")
+    # .show()
