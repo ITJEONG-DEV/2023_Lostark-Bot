@@ -9,7 +9,6 @@ import requests
 
 path = os.path.join(os.path.dirname(os.path.abspath(__file__)))
 
-
 def get_adventure_island_info(authorization):
     request_url = "https://developer-lostark.game.onstove.com/gamecontents/calendar"
 
@@ -51,22 +50,45 @@ def parse_adventure_island(authorization):
 
         # 섬 출연 정보를 DB에 추가한다
         for time in start_time:
-            if not check_island_schedule_available(name=item["ContentsName"], date=time[0], time=time[1]):
-                add_adventure_island_schedule(name=item["ContentsName"], date=time[0], time=time[1])
+            if not check_island_schedule_available(
+                    name=item["ContentsName"],
+                    date=time[0],
+                    time=time[1]
+            ):
+                add_adventure_island_schedule(
+                    name=item["ContentsName"],
+                    date=time[0],
+                    time=time[1]
+                )
 
         # 모험섬 보상을 체크한다
         for reward in item["RewardItems"]:
 
             # 아이템 확인
-            if not check_reward_item_available(reward["Name"]):
+            if not check_reward_item_available(
+                    name=reward["Name"],
+                    grade=reward["Grade"]
+            ):
                 # 아이템 정보 추가
-                add_reward_item_const(name=reward["Name"], url=reward["Icon"], grade=reward["Grade"])
+                add_reward_item_const(
+                    name=reward["Name"],
+                    url=reward["Icon"],
+                    grade=reward["Grade"]
+                )
 
             # 기본 보상인지 확인한다
             if reward["StartTimes"] is None:
-                if not check_reward_item_const_available(island=item["ContentsName"], reward=reward["Name"]):
+                if not check_reward_item_const_available(
+                        island=item["ContentsName"],
+                        reward=reward["Name"],
+                        grade=reward["Grade"]
+                ):
                     # 기본 보상 정보 추가
-                    add_default_reward_item(island=item["ContentsName"], reward=reward["Name"])
+                    add_default_reward_item(
+                        island=item["ContentsName"],
+                        reward=reward["Name"],
+                        grade=reward["Grade"]
+                    )
 
             else:
                 reward_time = []
@@ -86,10 +108,20 @@ def parse_adventure_island(authorization):
 
                 # 모험섬 보상 스케쥴 존재 여부 확인 후, 모험섬 보상 스케쥴 추가
                 for time in reward_time:
-                    if not check_island_reward_schedule_available(date=time[0], time=time[1],
-                                                                  island=item["ContentsName"], reward=reward["Name"]):
-                        add_island_reward_schedule(date=time[0], time=time[1], island=item["ContentsName"],
-                                                   reward=reward["Name"])
+                    if not check_island_reward_schedule_available(
+                            date=time[0],
+                            time=time[1],
+                            island=item["ContentsName"],
+                            reward=reward["Name"],
+                            grade=reward["Grade"]
+                    ):
+                        add_island_reward_schedule(
+                            date=time[0],
+                            time=time[1],
+                            island=item["ContentsName"],
+                            reward=reward["Name"],
+                            grade=reward["Grade"]
+                        )
 
     print("[Done] parsing adventure island information")
 
@@ -283,6 +315,7 @@ if __name__ == "__main__":
     #path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
     #api_key = read_json(path + "/data/key.json")["lostark"]["api_key"]
     #parse_adventure_island(authorization=f"Bearer {api_key}")
+    link = get_adventure_island('2023-03-13', False)
 
     # print(get_adventure_island('2023-03-11', False))
     # image = get_adventure_island(

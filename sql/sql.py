@@ -35,7 +35,7 @@ def check_adventure_island_available(name):
 
 
 # 아이템 정보가 DB에 있는지 확인
-def check_reward_item_available(name):
+def check_reward_item_available(name, grade):
     except_keyword_list = key["lostark"]["except_item"]
 
     for keyword in except_keyword_list:
@@ -47,7 +47,7 @@ def check_reward_item_available(name):
         con = connect()
 
     cur = con.cursor()
-    sql = f"SELECT COUNT(`REWARD_NAME`) AS `COUNT` FROM `REWARD_ITEM` WHERE `REWARD_NAME`='{name}';"
+    sql = f"SELECT COUNT(`REWARD_NAME`) AS `COUNT` FROM `REWARD_ITEM` WHERE `REWARD_NAME`='{name}' AND `ITEM_GRADE` = '{grade}';"
     cur.execute(sql)
     result = cur.fetchall()
 
@@ -58,7 +58,7 @@ def check_reward_item_available(name):
 
 
 # 기본 리워드 정보가 DB에 있는지 확인
-def check_reward_item_const_available(island, reward):
+def check_reward_item_const_available(island, reward, grade):
     except_keyword_list = key["lostark"]["except_item"]
 
     for keyword in except_keyword_list:
@@ -70,7 +70,7 @@ def check_reward_item_const_available(island, reward):
         con = connect()
 
     cur = con.cursor()
-    sql = f"SELECT COUNT(`REWARD_NAME_`) AS `COUNT` FROM `ISLAND_REWARD_CONST` WHERE `REWARD_NAME_`='{reward}' AND `ISLAND_NAME_`='{island}';"
+    sql = f"SELECT COUNT(`REWARD_NAME_`) AS `COUNT` FROM `ISLAND_REWARD_CONST` WHERE `REWARD_NAME_`='{reward}' AND `ISLAND_NAME_`='{island}' AND `ITEM_GRADE_`='{grade}';"
     cur.execute(sql)
     result = cur.fetchall()
 
@@ -81,7 +81,7 @@ def check_reward_item_const_available(island, reward):
 
 
 # 모험섬 스케쥴이 DB에 있는지 확인
-def check_island_reward_schedule_available(date, time, island, reward):
+def check_island_reward_schedule_available(date, time, island, reward, grade):
     except_keyword_list = key["lostark"]["except_item"]
 
     for keyword in except_keyword_list:
@@ -93,7 +93,7 @@ def check_island_reward_schedule_available(date, time, island, reward):
         con = connect()
 
     cur = con.cursor()
-    sql = f"SELECT COUNT(`REWARD_NAME`) AS `COUNT` FROM `ISLAND_REWARD_SCHEDULE` WHERE `REWARD_NAME`='{reward}' AND `ISLAND_NAME`='{island}' AND `APPEAR_DATE`='{date}' AND `PART_TIME`='{time}';"
+    sql = f"SELECT COUNT(`REWARD_NAME`) AS `COUNT` FROM `ISLAND_REWARD_SCHEDULE` WHERE `REWARD_NAME`='{reward}' AND `ISLAND_NAME`='{island}' AND `APPEAR_DATE`='{date}' AND `PART_TIME`='{time}' AND `ITEM_GRADE`='{grade}';"
     cur.execute(sql)
     result = cur.fetchall()
 
@@ -159,7 +159,7 @@ def add_reward_item_const(name, url, grade):
 
 
 # 기본 리워드 정보를 DB에 추가
-def add_default_reward_item(island, reward):
+def add_default_reward_item(island, reward, grade):
     except_keyword_list = key["lostark"]["except_item"]
 
     for keyword in except_keyword_list:
@@ -172,7 +172,7 @@ def add_default_reward_item(island, reward):
 
     try:
         cur = con.cursor()
-        sql = f"INSERT INTO `ISLAND_REWARD_CONST`(`ISLAND_NAME_`, `REWARD_NAME_`) VALUES ('{island}', '{reward}');"
+        sql = f"INSERT INTO `ISLAND_REWARD_CONST`(`ISLAND_NAME_`, `REWARD_NAME_`, `ITEM_GRADE_`) VALUES ('{island}', '{reward}', '{grade}');"
         cur.execute(sql)
         con.commit()
 
@@ -196,7 +196,7 @@ def add_adventure_island_schedule(name, date, time):
 
 
 # 모험섬 보상 스케쥴을 DB에 추가
-def add_island_reward_schedule(date, time, island, reward):
+def add_island_reward_schedule(date, time, island, reward, grade):
     except_keyword_list = key["lostark"]["except_item"]
 
     for keyword in except_keyword_list:
@@ -209,7 +209,7 @@ def add_island_reward_schedule(date, time, island, reward):
 
     try:
         cur = con.cursor()
-        sql = f"INSERT INTO `ISLAND_REWARD_SCHEDULE`(`APPEAR_DATE`, `PART_TIME`, `ISLAND_NAME`, `REWARD_NAME`) VALUES ('{date}', '{time}', '{island}', '{reward}');"
+        sql = f"INSERT INTO `ISLAND_REWARD_SCHEDULE`(`APPEAR_DATE`, `PART_TIME`, `ISLAND_NAME`, `REWARD_NAME`, `ITEM_GRADE`) VALUES ('{date}', '{time}', '{island}', '{reward}', '{grade}');"
         cur.execute(sql)
         con.commit()
 
@@ -233,20 +233,32 @@ def get_adventure_island_reward_info(date, time):
 
     reward_dict = {}
 
+    grade_rank = {
+        "일반": 7,
+        "고급": 6,
+        "희귀": 5,
+        "영웅": 4,
+        "전설": 3,
+        "유물": 2,
+        "고대": 1,
+        "에스더": 0
+    }
+
     if len(result) > 0:
         for name in island:
             # 변동 보상 추가
-            sql = f"SELECT `ISLAND_REWARD_SCHEDULE`.`REWARD_NAME`, `REWARD_ITEM`.`ITEM_GRADE` AS `ITEM_GRADE` FROM `ISLAND_REWARD_SCHEDULE` JOIN `REWARD_ITEM` ON `REWARD_ITEM`.`REWARD_NAME` = `ISLAND_REWARD_SCHEDULE`.`REWARD_NAME`  WHERE `ISLAND_REWARD_SCHEDULE`.`APPEAR_DATE` = '{date}' AND `ISLAND_REWARD_SCHEDULE`.`PART_TIME` = {time} AND `ISLAND_REWARD_SCHEDULE`.`ISLAND_NAME` = '{name}';"
+            sql = f"SELECT `REWARD_NAME`, `ITEM_GRADE` FROM `ISLAND_REWARD_SCHEDULE` WHERE `APPEAR_DATE` = '{date}' AND `PART_TIME` = '{time}' AND `ISLAND_NAME` = '{name}';"
             cur.execute(sql)
             result = cur.fetchall()
 
             result = list(result)
-            result.reverse()
+
+            result = sorted(result, key=lambda x: grade_rank[x[1]])
 
             reward_dict[name] = [item for item in result]
 
             # 고정 보상 추가
-            sql = f"SELECT `ISLAND_REWARD_CONST`.`REWARD_NAME_` AS `REWARD_NAME`, `REWARD_ITEM`.`ITEM_GRADE` AS `ITEM_GRADE` FROM `ISLAND_REWARD_CONST` JOIN `REWARD_ITEM` ON `REWARD_ITEM`.`REWARD_NAME` = `ISLAND_REWARD_CONST`.`REWARD_NAME_` WHERE `ISLAND_REWARD_CONST`.`ISLAND_NAME_` = '{name}';"
+            sql = f"SELECT `REWARD_NAME_`, `ITEM_GRADE_` FROM `ISLAND_REWARD_CONST` WHERE `ISLAND_NAME_` = '{name}';"
             cur.execute(sql)
             result = cur.fetchall()
 
@@ -265,4 +277,4 @@ def get_adventure_island_reward_info(date, time):
 
 if __name__ == "__main__":
     print("hi")
-    print(get_advendure_island_info(date="2023-03-11", time="0"))
+    # print(get_advendure_island_info(date="2023-03-11", time="0"))
