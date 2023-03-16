@@ -12,6 +12,7 @@ import requests
 global font_dir, title_font, time_font, island_font
 
 path = os.path.join(os.path.dirname(os.path.abspath(__file__)))
+current_os = "linux"
 
 if "Linux" in platform.platform():
 
@@ -22,6 +23,7 @@ if "Linux" in platform.platform():
     time_font = ImageFont.truetype(ttf_files[-1], size=32)
     island_font = ImageFont.truetype(ttf_files[-1], size=28)
 elif "Window" in platform.platform():
+    current_os = "window"
 
     title_font = ImageFont.truetype("C:/USERS/DEV2/APPDATA/LOCAL/MICROSOFT/WINDOWS/FONTS/NANUMBARUNGOTHICBOLD.TTF",
                                     size=40)
@@ -157,10 +159,18 @@ def get_image(name: str):
 
     dir = os.path.join(path, 'data', 'resource')
 
-    if not os.path.isfile(dir + f'\\{name}.png'):
-        print("download request")
+    if current_os == "Linux":
+        if not os.path.isfile(dir + f'/{name}.png'):
+            print("download request")
 
-    return Image.open(dir + f'\\{name}.png').convert("RGBA")
+        return Image.open(dir + f'/{name}.png').convert("RGBA")
+
+
+    else:
+        if not os.path.isfile(dir + f'\\{name}.png'):
+            print("download request")
+
+        return Image.open(dir + f'\\{name}.png').convert("RGBA")
 
 
 # 일반 고급 희귀 영웅 전설 유물 고대 에스더
