@@ -4,6 +4,7 @@ from PIL import Image, ImageDraw, ImageFont
 from sql.sql import *
 
 import os
+import glob
 import datetime
 import requests
 
@@ -12,7 +13,7 @@ path = os.path.join(os.path.dirname(os.path.abspath(__file__)))
 def get_adventure_island_info(authorization):
     request_url = "https://developer-lostark.game.onstove.com/gamecontents/calendar"
 
-    response = requests.get(request_url, headers={'accept': 'application/json', 'authorization': authorization})
+    response = requests.get(request_url, headers={'accept': 'application/json', 'authorization': authorization}, verify=False)
 
     adventure_island_list = []
 
@@ -159,10 +160,15 @@ def get_item_color(grade: str):
 
 window_size = (1024, 512)
 icon_size = (64, 64)
-print(f"{path}/data/resource/NANUMBARUNGOTHICBOLD.TTF")
-title_font = ImageFont.truetype(f"{path}/data/resource/NanumBarunGothicBold.TTF", size=40)
-time_font = ImageFont.truetype(f"{path}/data/resource/NanumBarunGothic.TTF", size=32)
-island_font = ImageFont.truetype(f"{path}/data/resource/NanumBarunGothic.TTF", size=28)
+# print(f"{path}/data/resource/NANUMBARUNGOTHICBOLD.TTF")
+
+font_dir = "/usr/share/fonts/truetype/nanum"
+ttf_files = glob.glob(f"{font_dir}/*.ttf")
+# print(ttf_files)
+
+title_font = ImageFont.truetype(ttf_files[-4], size=40)
+time_font = ImageFont.truetype(ttf_files[-1], size=32)
+island_font = ImageFont.truetype(ttf_files[-1], size=28)
 item_color = (50, 50, 50)
 
 background_color = (0, 0, 0)

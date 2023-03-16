@@ -1,0 +1,77 @@
+Traceback (most recent call last):
+  File "/home/itjeong/.local/lib/python3.8/site-packages/requests/models.py", line 971, in json
+    return complexjson.loads(self.text, **kwargs)
+  File "/usr/lib/python3/dist-packages/simplejson/__init__.py", line 518, in loads
+    return _default_decoder.decode(s)
+  File "/usr/lib/python3/dist-packages/simplejson/decoder.py", line 370, in decode
+    obj, end = self.raw_decode(s)
+  File "/usr/lib/python3/dist-packages/simplejson/decoder.py", line 400, in raw_decode
+    return self.scan_once(s, idx=_w(s, idx).end())
+simplejson.errors.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "loabot_run.py", line 8, in <module>
+    bot.run()
+  File "/home/itjeong/2023_Lostark-Bot/Bot/bot.py", line 76, in run
+    parse_adventure_island(authorization=f"Bearer {self.lostark['api_key']}")
+  File "/home/itjeong/2023_Lostark-Bot/adventure_island/adventure_island.py", line 28, in parse_adventure_island
+    item_list = get_adventure_island_info(authorization)
+  File "/home/itjeong/2023_Lostark-Bot/adventure_island/adventure_island.py", line 20, in get_adventure_island_info
+    for item in response.json():
+  File "/home/itjeong/.local/lib/python3.8/site-packages/requests/models.py", line 975, in json
+    raise RequestsJSONDecodeError(e.msg, e.doc, e.pos)
+requests.exceptions.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+Traceback (most recent call last):
+  File "/usr/lib/python3/dist-packages/urllib3/connectionpool.py", line 665, in urlopen
+    httplib_response = self._make_request(
+  File "/usr/lib/python3/dist-packages/urllib3/connectionpool.py", line 376, in _make_request
+    self._validate_conn(conn)
+  File "/usr/lib/python3/dist-packages/urllib3/connectionpool.py", line 996, in _validate_conn
+    conn.connect()
+  File "/usr/lib/python3/dist-packages/urllib3/connection.py", line 366, in connect
+    self.sock = ssl_wrap_socket(
+  File "/usr/lib/python3/dist-packages/urllib3/util/ssl_.py", line 370, in ssl_wrap_socket
+    return context.wrap_socket(sock, server_hostname=server_hostname)
+  File "/usr/lib/python3.8/ssl.py", line 500, in wrap_socket
+    return self.sslsocket_class._create(
+  File "/usr/lib/python3.8/ssl.py", line 1040, in _create
+    self.do_handshake()
+  File "/usr/lib/python3.8/ssl.py", line 1309, in do_handshake
+    self._sslobj.do_handshake()
+ssl.SSLCertVerificationError: [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1131)
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/itjeong/.local/lib/python3.8/site-packages/requests/adapters.py", line 489, in send
+    resp = conn.urlopen(
+  File "/usr/lib/python3/dist-packages/urllib3/connectionpool.py", line 719, in urlopen
+    retries = retries.increment(
+  File "/usr/lib/python3/dist-packages/urllib3/util/retry.py", line 436, in increment
+    raise MaxRetryError(_pool, url, error or ResponseError(cause))
+urllib3.exceptions.MaxRetryError: HTTPSConnectionPool(host='developer-lostark.game.onstove.com', port=443): Max retries exceeded with url: /gamecontents/calendar (Caused by SSLError(SSLCertVerificationError(1, '[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1131)')))
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "loabot_run.py", line 8, in <module>
+    bot.run()
+  File "/home/itjeong/2023_Lostark-Bot/Bot/bot.py", line 78, in run
+    parse_adventure_island(authorization=f"Bearer {self.lostark['api_key']}")
+  File "/home/itjeong/2023_Lostark-Bot/adventure_island/adventure_island.py", line 28, in parse_adventure_island
+    item_list = get_adventure_island_info(authorization)
+  File "/home/itjeong/2023_Lostark-Bot/adventure_island/adventure_island.py", line 16, in get_adventure_island_info
+    response = requests.get(request_url, headers={'accept': 'application/json', 'authorization': authorization})
+  File "/home/itjeong/.local/lib/python3.8/site-packages/requests/api.py", line 73, in get
+    return request("get", url, params=params, **kwargs)
+  File "/home/itjeong/.local/lib/python3.8/site-packages/requests/api.py", line 59, in request
+    return session.request(method=method, url=url, **kwargs)
+  File "/home/itjeong/.local/lib/python3.8/site-packages/requests/sessions.py", line 587, in request
+    resp = self.send(prep, **send_kwargs)
+  File "/home/itjeong/.local/lib/python3.8/site-packages/requests/sessions.py", line 701, in send
+    r = adapter.send(request, **kwargs)
+  File "/home/itjeong/.local/lib/python3.8/site-packages/requests/adapters.py", line 563, in send
+    raise SSLError(e, request=request)
+requests.exceptions.SSLError: HTTPSConnectionPool(host='developer-lostark.game.onstove.com', port=443): Max retries exceeded with url: /gamecontents/calendar (Caused by SSLError(SSLCertVerificationError(1, '[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1131)')))

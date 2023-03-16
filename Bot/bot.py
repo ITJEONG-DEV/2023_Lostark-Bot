@@ -1,5 +1,6 @@
 import datetime
 import time
+import os
 
 import pymysql
 import tweepy
@@ -10,8 +11,9 @@ from adventure_island import *
 
 class TwitterBot:
     def __init__(self):
-        self.data = read_json("./data/key.json")["twitter"]
-        self.lostark = read_json("./data/key.json")["lostark"]
+        path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
+        self.data = read_json(path + "/data/key.json")["twitter"]
+        self.lostark = read_json(path + "/data/key.json")["lostark"]
 
         self.auth = None
         self.api = None
@@ -85,7 +87,7 @@ class TwitterBot:
             "\n".join([" 월요일 컨텐츠>", "- 카오스 게이트", "- 모험섬"]),
             "\n".join([" 화요일 컨텐츠>", "- 필드보스", "- 유령선", "- 모험섬"]),
             "\n".join([" 로요일 컨텐츠>", "- 모험섬", "- 툴루비크 전장"]),
-            "\n".join([" 목요일 컨텐츠>", "- 카오스 게이트", "- 유령선", "모험섬"]),
+            "\n".join([" 목요일 컨텐츠>", "- 카오스 게이트", "- 유령선", "- 모험섬"]),
             "\n".join([" 금요일 컨텐츠>", "- 필드보스", "- 모험섬"]),
             "\n".join([" 토요일 컨텐츠>", "- 카오스 게이트", "- 유령선", "- 모험섬(오전/오후)", "- 툴루비크 전장"]),
             "\n".join([" 일요일 컨텐츠>", "- 카오스 게이트", "- 필드보스", "- 모험섬(오전/오후)", "- 툴루비크 전장"]),
@@ -98,7 +100,7 @@ class TwitterBot:
 
         parse_adventure_island(authorization=f"Bearer {self.lostark['api_key']}")
         link = get_adventure_island(now.strftime('%Y-%m-%d'), day >= 5)
-        self.post_image(link, now.strftime("%Y-%m-%d") + message[day] + "\n\n등장하는 모험섬 정보>")
+        self.post_image(link, "\n" + now.strftime("%Y-%m-%d") + message[day] + "\n\n등장하는 모험섬 정보>")
 
         print("탈출")
 
