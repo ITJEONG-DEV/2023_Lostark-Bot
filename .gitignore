@@ -154,3 +154,5 @@ cython_debug/
 # data
 /data/
 /adventure_island/data/today/*
+
+*.out

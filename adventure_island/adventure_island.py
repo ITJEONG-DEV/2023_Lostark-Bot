@@ -5,6 +5,7 @@ from sql.sql import *
 
 import os
 import glob
+import platform
 import datetime
 import requests
 
@@ -160,15 +161,22 @@ def get_item_color(grade: str):
 
 window_size = (1024, 512)
 icon_size = (64, 64)
-# print(f"{path}/data/resource/NANUMBARUNGOTHICBOLD.TTF")
 
-font_dir = "/usr/share/fonts/truetype/nanum"
-ttf_files = glob.glob(f"{font_dir}/*.ttf")
+global font_dir, title_font, time_font, island_font
+if "Linux" in platform.platform():
+    font_dir = "/usr/share/fonts/truetype/nanum"
+    ttf_files = glob.glob(f"{font_dir}/*.ttf")
+
+    title_font = ImageFont.truetype(ttf_files[-4], size=40)
+    time_font = ImageFont.truetype(ttf_files[-1], size=32)
+    island_font = ImageFont.truetype(ttf_files[-1], size=28)
+elif "Window" in platform.platform():
+    title_font = ImageFont.truetype("C:/USERS/DEV2/APPDATA/LOCAL/MICROSOFT/WINDOWS/FONTS/NANUMBARUNGOTHICBOLD.TTF", size=40)
+    time_font = ImageFont.truetype("C:/USERS/DEV2/APPDATA/LOCAL/MICROSOFT/WINDOWS/FONTS/NANUMBARUNGOTHIC.TTF", size=32)
+    island_font = ImageFont.truetype("C:/USERS/DEV2/APPDATA/LOCAL/MICROSOFT/WINDOWS/FONTS/NANUMBARUNGOTHIC.TTF", size=28)
+
 # print(ttf_files)
 
-title_font = ImageFont.truetype(ttf_files[-4], size=40)
-time_font = ImageFont.truetype(ttf_files[-1], size=32)
-island_font = ImageFont.truetype(ttf_files[-1], size=28)
 item_color = (50, 50, 50)
 
 background_color = (0, 0, 0)
@@ -321,7 +329,7 @@ if __name__ == "__main__":
     #path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
     #api_key = read_json(path + "/data/key.json")["lostark"]["api_key"]
     #parse_adventure_island(authorization=f"Bearer {api_key}")
-    link = get_adventure_island('2023-03-13', False)
+    # link = get_adventure_island('2023-03-13', False)
 
     # print(get_adventure_island('2023-03-11', False))
     # image = get_adventure_island(
