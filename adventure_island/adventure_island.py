@@ -9,12 +9,35 @@ import platform
 import datetime
 import requests
 
+global font_dir, title_font, time_font, island_font
+
 path = os.path.join(os.path.dirname(os.path.abspath(__file__)))
+
+if "Linux" in platform.platform():
+
+    font_dir = "/usr/share/fonts/truetype/nanum"
+    ttf_files = glob.glob(f"{font_dir}/*.ttf")
+
+    title_font = ImageFont.truetype(ttf_files[-4], size=40)
+    time_font = ImageFont.truetype(ttf_files[-1], size=32)
+    island_font = ImageFont.truetype(ttf_files[-1], size=28)
+elif "Window" in platform.platform():
+
+    title_font = ImageFont.truetype("C:/USERS/DEV2/APPDATA/LOCAL/MICROSOFT/WINDOWS/FONTS/NANUMBARUNGOTHICBOLD.TTF",
+                                    size=40)
+    time_font = ImageFont.truetype("C:/USERS/DEV2/APPDATA/LOCAL/MICROSOFT/WINDOWS/FONTS/NANUMBARUNGOTHIC.TTF", size=32)
+    island_font = ImageFont.truetype("C:/USERS/DEV2/APPDATA/LOCAL/MICROSOFT/WINDOWS/FONTS/NANUMBARUNGOTHIC.TTF",
+                                     size=28)
+
+
+# print(ttf_files)
+
 
 def get_adventure_island_info(authorization):
     request_url = "https://developer-lostark.game.onstove.com/gamecontents/calendar"
 
-    response = requests.get(request_url, headers={'accept': 'application/json', 'authorization': authorization}, verify=False)
+    response = requests.get(request_url, headers={'accept': 'application/json', 'authorization': authorization},
+                            verify=False)
 
     adventure_island_list = []
 
@@ -132,10 +155,12 @@ def parse_adventure_island(authorization):
 def get_image(name: str):
     name = name.replace(":", "")
 
-    if not os.path.isfile(f'{path}/data/resource/{name}.png'):
+    dir = os.path.join(path, 'data', 'resource')
+
+    if not os.path.isfile(dir + f'\\{name}.png'):
         print("download request")
 
-    return Image.open(f'{path}/data/resource/{name}.png').convert("RGBA")
+    return Image.open(dir + f'\\{name}.png').convert("RGBA")
 
 
 # 일반 고급 희귀 영웅 전설 유물 고대 에스더
@@ -161,21 +186,6 @@ def get_item_color(grade: str):
 
 window_size = (1024, 512)
 icon_size = (64, 64)
-
-global font_dir, title_font, time_font, island_font
-if "Linux" in platform.platform():
-    font_dir = "/usr/share/fonts/truetype/nanum"
-    ttf_files = glob.glob(f"{font_dir}/*.ttf")
-
-    title_font = ImageFont.truetype(ttf_files[-4], size=40)
-    time_font = ImageFont.truetype(ttf_files[-1], size=32)
-    island_font = ImageFont.truetype(ttf_files[-1], size=28)
-elif "Window" in platform.platform():
-    title_font = ImageFont.truetype("C:/USERS/DEV2/APPDATA/LOCAL/MICROSOFT/WINDOWS/FONTS/NANUMBARUNGOTHICBOLD.TTF", size=40)
-    time_font = ImageFont.truetype("C:/USERS/DEV2/APPDATA/LOCAL/MICROSOFT/WINDOWS/FONTS/NANUMBARUNGOTHIC.TTF", size=32)
-    island_font = ImageFont.truetype("C:/USERS/DEV2/APPDATA/LOCAL/MICROSOFT/WINDOWS/FONTS/NANUMBARUNGOTHIC.TTF", size=28)
-
-# print(ttf_files)
 
 item_color = (50, 50, 50)
 
@@ -224,10 +234,28 @@ def make_island_box(island: str, rewards: [], grades: []):
 
     island_box.paste(island_image, (margin, margin), island_image)
 
-    # text
     drawable_image = ImageDraw.Draw(island_box)
+
+    # text ( island_type )
+    island_type = "섬"
+    if "골드" in rewards[0]:
+        island_type = "골드섬"
+    elif "카드" in rewards[0]:
+        island_type = "카드섬"
+    elif "주화" in rewards[0]:
+        island_type = "주화섬"
+    elif "실링" in rewards[0]:
+        island_type = "실링섬"
+    else:
+        island_type = "일반섬"
+
+    _w, _h = drawable_image.textsize(island_type, font=island_font)
+    x, y = icon_size[0] + icon_gap * 4 + margin, (height - _h) / 2
+    drawable_image.text((x, y), island_type, fill=title_color, font=island_font)
+
+    # text ( island_name )
     w, h = drawable_image.textsize(island, font=island_font)
-    x, y = icon_size[0] + icon_gap * 4 + margin, (height - h) / 2
+    x, y = x + _w + icon_gap*3, (height - h) / 2
     drawable_image.text((x, y), island, fill=font_color, font=island_font)
 
     # reward
@@ -326,10 +354,11 @@ def get_adventure_island(date, is_weekend):
 
 if __name__ == "__main__":
     print("hi")
-    #path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
-    #api_key = read_json(path + "/data/key.json")["lostark"]["api_key"]
-    #parse_adventure_island(authorization=f"Bearer {api_key}")
-    # link = get_adventure_island('2023-03-13', False)
+
+    api_key = read_json(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..") + "/data/key.json")["lostark"][
+        "api_key"]
+    parse_adventure_island(authorization=f"Bearer {api_key}")
+    link = get_adventure_island('2023-03-17', False)
 
     # print(get_adventure_island('2023-03-11', False))
     # image = get_adventure_island(
