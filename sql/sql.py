@@ -301,6 +301,31 @@ def get_adventure_island_reward_info(date, time):
         return None
 
 
+def get_island_url(name):
+    global con
+    if not con.begin():
+        con = connect()
+
+    cur = con.cursor()
+    sql = f"SELECT `ISLAND_ICON` FROM `ISLAND_CONST` WHERE `ISLAND_ICON` = '{name}';"
+    cur.execute(sql)
+    result = cur.fetchall()
+
+    return result[0][0]
+
+def get_image_url(name):
+    global con
+    if not con.begin():
+        con = connect()
+
+    cur = con.cursor()
+    sql = f"SELECT `REWARD_ICON` FROM `REWARD_ITEM` WHERE `REWARD_NAME` = '{name}';"
+    cur.execute(sql)
+    result = cur.fetchall()
+
+    return result[0][0]
+
+
 if __name__ == "__main__":
     print("hi")
     # print(get_advendure_island_info(date="2023-03-11", time="0"))

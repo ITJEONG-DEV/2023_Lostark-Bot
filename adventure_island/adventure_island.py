@@ -8,8 +8,9 @@ import glob
 import platform
 import datetime
 import requests
+import urllib.request
 
-global font_dir, title_font, time_font, island_font, island_type_font
+global font_dir, title_font, subtitle_font, abyss_font, guardian_font
 
 path = os.path.join(os.path.dirname(os.path.abspath(__file__)))
 current_os = "Linux"
@@ -20,19 +21,21 @@ if "Linux" in platform.platform():
     ttf_files = glob.glob(f"{font_dir}/*.ttf")
 
     title_font = ImageFont.truetype(ttf_files[-4], size=40)
-    time_font = ImageFont.truetype(ttf_files[-1], size=32)
-    island_font = ImageFont.truetype(ttf_files[-1], size=28)
-    island_type_font = ImageFont.truetype(ttf_files[-4], size=28)
+    subtitle_font = ImageFont.truetype(ttf_files[-1], size=32)
+    abyss_font = ImageFont.truetype(ttf_files[-1], size=28)
+    guardian_font = ImageFont.truetype(ttf_files[-4], size=28)
 elif "Window" in platform.platform():
     current_os = "window"
 
     title_font = ImageFont.truetype("C:/USERS/DEV2/APPDATA/LOCAL/MICROSOFT/WINDOWS/FONTS/NANUMBARUNGOTHICBOLD.TTF",
                                     size=40)
-    time_font = ImageFont.truetype("C:/USERS/DEV2/APPDATA/LOCAL/MICROSOFT/WINDOWS/FONTS/NANUMBARUNGOTHIC.TTF", size=32)
-    island_font = ImageFont.truetype("C:/USERS/DEV2/APPDATA/LOCAL/MICROSOFT/WINDOWS/FONTS/NANUMBARUNGOTHIC.TTF",
-                                     size=28)
-    island_type_font = ImageFont.truetype("C:/USERS/DEV2/APPDATA/LOCAL/MICROSOFT/WINDOWS/FONTS/NANUMBARUNGOTHICBOLD.TTF",
-                                     size=28)
+    subtitle_font = ImageFont.truetype("C:/USERS/DEV2/APPDATA/LOCAL/MICROSOFT/WINDOWS/FONTS/NANUMBARUNGOTHIC.TTF", size=32)
+    abyss_font = ImageFont.truetype("C:/USERS/DEV2/APPDATA/LOCAL/MICROSOFT/WINDOWS/FONTS/NANUMBARUNGOTHIC.TTF",
+                                    size=28)
+    guardian_font = ImageFont.truetype(
+        "C:/USERS/DEV2/APPDATA/LOCAL/MICROSOFT/WINDOWS/FONTS/NANUMBARUNGOTHICBOLD.TTF",
+        size=28)
+
 
 # print(ttf_files)
 
@@ -163,14 +166,14 @@ def get_image(name: str):
 
     if current_os == "Linux":
         if not os.path.isfile(dir + f'/{name}.png'):
-            print("download request")
+            return None
 
         return Image.open(dir + f'/{name}.png').convert("RGBA")
 
 
     else:
         if not os.path.isfile(dir + f'\\{name}.png'):
-            print("download request")
+            return None
 
         return Image.open(dir + f'\\{name}.png').convert("RGBA")
 
@@ -227,6 +230,12 @@ def make_rewards_box(rewards: [], grades: []):
         reward_back = Image.new('RGBA', icon_size, get_item_color(grade))
 
         reward_image = get_image(reward)
+        if reward_image is None:
+            url = get_image_url(reward)
+            print(url)
+            urllib.request.urlretrieve(url, f"{path}/data/resource/{reward}.png")
+            reward_image = get_image(reward)
+
         reward_image = reward_image.resize(icon_size)
 
         start_x, start_y = (icon_size[0] + icon_gap) * i, 0
@@ -242,6 +251,11 @@ def make_island_box(island: str, rewards: [], grades: []):
 
     # island
     island_image = get_image(island)
+    if island_image is None:
+        url = get_island_url(island)
+        urllib.request.urlretrieve(url, f"{path}/data/resource/{island}.png")
+        island_image = get_image(island)
+
     island_image = island_image.resize(icon_size)
 
     island_box.paste(island_image, (margin, margin), island_image)
@@ -261,14 +275,14 @@ def make_island_box(island: str, rewards: [], grades: []):
     else:
         island_type = "일반섬"
 
-    _w, _h = drawable_image.textsize(island_type, font=island_type_font)
+    _w, _h = drawable_image.textsize(island_type, font=guardian_font)
     x, y = icon_size[0] + icon_gap * 4 + margin, (height - _h) / 2
-    drawable_image.text((x, y), island_type, fill=title_color, font=island_type_font)
+    drawable_image.text((x, y), island_type, fill=title_color, font=guardian_font)
 
     # text ( island_name )
-    w, h = drawable_image.textsize(island, font=island_font)
-    x, y = x + _w + icon_gap*3, (height - h) / 2
-    drawable_image.text((x, y), island, fill=font_color, font=island_font)
+    w, h = drawable_image.textsize(island, font=abyss_font)
+    x, y = x + _w + icon_gap * 3, (height - h) / 2
+    drawable_image.text((x, y), island, fill=font_color, font=abyss_font)
 
     # reward
     rewards_box = make_rewards_box(rewards, grades)
@@ -299,9 +313,9 @@ def make_island_content(island_rewards_infoes: [[]], time_text):
 
     # text
     drawable_image = ImageDraw.Draw(island_content)
-    w, h = drawable_image.textsize(time_text, font=time_font)
+    w, h = drawable_image.textsize(time_text, font=subtitle_font)
     x, y = (width - w) / 2, h / 2
-    drawable_image.text((x, y), time_text, fill=font_color, font=time_font)
+    drawable_image.text((x, y), time_text, fill=font_color, font=subtitle_font)
 
     # image
     island_boxes = make_island_boxes(island_rewards_infoes)

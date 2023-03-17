@@ -6,7 +6,8 @@ import pymysql
 import tweepy
 
 from util import read_json
-from adventure_island import *
+from adventure_island import parse_adventure_island, get_adventure_island
+from challenge_contents import get_weekly_challenge_contents
 
 
 class TwitterBot:
@@ -77,7 +78,11 @@ class TwitterBot:
             if now.hour == 8 and now.minute == 0 and now.second == 0:
                 parse_adventure_island(authorization=f"Bearer {self.lostark['api_key']}")
                 link = get_adventure_island(now.strftime('%Y-%m-%d'), day >= 5)
-                self.post_image(link, now.strftime("%Y-%m-%d") + message[day] + "\n\n등장하는 모험섬 정보>")
+                status = self.post_image(link, now.strftime("%Y-%m-%d") + message[day] + "\n\n등장하는 모험섬 정보>")
+
+                if day == 2:
+                    link = get_weekly_challenge_contents(authorization=f"Bearer {self.lostark['api_key']}")
+                    self.post_image(link, "주간 도전 컨텐츠 안내>", reply_id=status["id_str"])
 
     def test(self):
         if self.api is None:
@@ -100,12 +105,24 @@ class TwitterBot:
 
         parse_adventure_island(authorization=f"Bearer {self.lostark['api_key']}")
         link = get_adventure_island(now.strftime('%Y-%m-%d'), day >= 5)
-        self.post_image(link, "\n" + now.strftime("%Y-%m-%d") + message[day] + "\n\n등장하는 모험섬 정보>")
+        status = self.post_image(link, now.strftime("%Y-%m-%d") + message[day] + "\n\n등장하는 모험섬 정보>")
+
+        print(status)
+
+        link = get_weekly_challenge_contents(authorization=f"Bearer {self.lostark['api_key']}")
+        self.post_image(link, "주간 도전 컨텐츠 안내>", reply_id=status.id_str)
 
         print("탈출")
 
-    def post_image(self, image_path, message):
+    def challenge_contents_test(self):
+        link = get_weekly_challenge_contents(authorization=f"Bearer {self.lostark['api_key']}")
+        # self.post_image(link, "주간 도전 컨텐츠 안내>")
+
+
+    def post_image(self, image_path, message, reply_id=None):
         media = self.api.media_upload(image_path)
 
-        self.api.update_status(status=message, media_ids=[media.media_id])
+        status = self.api.update_status(status=message, media_ids=[media.media_id], in_reply_to_status_id=reply_id)
         print(f"다음의 내용을 트윗합니다.\n{message}, {media.media_id}")
+
+        return status

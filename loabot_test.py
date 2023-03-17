@@ -7,4 +7,5 @@ if __name__ == "__main__":
     bot.start()
     bot.test()
     # bot.run()
+    # bot.challenge_contents_test()
 
