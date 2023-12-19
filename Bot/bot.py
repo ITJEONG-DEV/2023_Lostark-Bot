@@ -36,28 +36,92 @@ class TwitterBot:
 
         datetime.timezone(datetime.timedelta(seconds=32400))
 
-    def connect_to_db(self):
-        if self.con is None:
-            self.con = pymysql.connect(host='localhost', user='root', password='September 19th, 2022 q!w@e#r$5678',
-                                       db='LOA', charset='utf8')
+    def filter_data(auth):
+        data = get_island_info(auth)
 
-    def close_db(self):
-        if self.con is not None:
-            self.con.close()
+        today_island = []
 
-        self.con = None
+        today = datetime.datetime.now().strftime("%Y-%m-%d")
+
+        for island in data:
+            start_times = island["StartTimes"]
+
+            if start_times is None:
+                continue
+
+            # 오늘의 모험섬인지 확인
+            for start_time in start_times:
+                words = start_time.split("T")
+                if words[0] == today:
+                    today_island.append({
+                        "name": island["ContentsName"],
+                        "icon": island["ContentsIcon"],
+                        "time": words[1].split(":")[0]  ## hour
+                    })
+                    break
+
+            # 오늘의 모험섬 보상인지 확인
+            reward_items = island["RewardItems"]
+
+            if reward_items is None:
+                continue
+
+            for reward_item in reward_items:
+                # 공통 보상 제외
+                ignore_item = ["인연의 돌"]
+                if reward_item["Name"] in ignore_item:
+                    continue
+
+                # 기본 보상 제외
+                if reward_item["StartTimes"] is not None:
+                    exception = False
+                    exception_reward = ["비밀지도", "모험물", "수호", "풍요"]
+
+                    for reward in exception_reward:
+                        if reward in reward_item["Name"]:
+                            exception = True
+
+                    if exception:
+                        if "reward" not in today_island[len(today_island) - 1].keys():
+                            today_island[len(today_island) - 1]["reward"] = []
+
+                        today_island[len(today_island) - 1]["reward"].append({
+                            "name": reward_item["Name"],
+                            "icon": reward_item["Icon"],
+                            "grade": reward_item["Grade"]
+                        })
+
+                if reward_item["StartTimes"] is not None:
+                    start_times = reward_item["StartTimes"]
+
+                    for start_time in start_times:
+                        words = start_time.split("T")
+                        if words[0] == today:
+                            if "reward" not in today_island[len(today_island) - 1].keys():
+                                today_island[len(today_island) - 1]["reward"] = []
+
+                            today_island[len(today_island) - 1]["reward"].append({
+                                "name": reward_item["Name"],
+                                "icon": reward_item["Icon"],
+                                "grade": reward_item["Grade"]
+                            })
+                            break
+
+        return today_island
 
     def get_adventure_island_information(self, key):
-        self.connect_to_db()
+        date = datetime.datetime.now().strftime("%Y-%m-%d")
+        link = f'./result/today/{date}.png'
 
-        cur = self.con.cursor()
-        sql = f"SELECT `ISLAND`, `REWARD` FROM ADVENTURE_ISLAND WHERE `ID` = {key};"
-        cur.execute(sql)
-        rows = cur.fetchall()
+        if not os.path.isfile(link):
+            island_info = filter_data(auth)
 
-        self.close_db()
+            image = make_daily_adventure_island(island_info, f"{date} 모험섬 일정")
+            # link = f'./adventure_island/data/today/{date}.png'
+            # link = f'D:/{date}.png'
+            image.save(link)
 
-        return rows[0]
+        return link
 
     def run(self):
         message = [
@@ -109,8 +173,8 @@ class TwitterBot:
 
         print(status)
 
-        link = get_weekly_challenge_contents(authorization=f"Bearer {self.lostark['api_key']}")
-        self.post_image(link, "주간 도전 컨텐츠 안내>", reply_id=status.id_str)
+        # link = get_weekly_challenge_contents(authorization=f"Bearer {self.lostark['api_key']}")
+        # self.post_image(link, "주간 도전 컨텐츠 안내>", reply_id=status.id_str)
 
         print("탈출")
 

@@ -29,15 +29,13 @@ elif "Window" in platform.platform():
 
     title_font = ImageFont.truetype("C:/USERS/DEV2/APPDATA/LOCAL/MICROSOFT/WINDOWS/FONTS/NANUMBARUNGOTHICBOLD.TTF",
                                     size=40)
-    subtitle_font = ImageFont.truetype("C:/USERS/DEV2/APPDATA/LOCAL/MICROSOFT/WINDOWS/FONTS/NANUMBARUNGOTHIC.TTF", size=32)
+    subtitle_font = ImageFont.truetype("C:/USERS/DEV2/APPDATA/LOCAL/MICROSOFT/WINDOWS/FONTS/NANUMBARUNGOTHIC.TTF",
+                                       size=32)
     abyss_font = ImageFont.truetype("C:/USERS/DEV2/APPDATA/LOCAL/MICROSOFT/WINDOWS/FONTS/NANUMBARUNGOTHIC.TTF",
                                     size=28)
     guardian_font = ImageFont.truetype(
         "C:/USERS/DEV2/APPDATA/LOCAL/MICROSOFT/WINDOWS/FONTS/NANUMBARUNGOTHICBOLD.TTF",
         size=28)
-
-
-# print(ttf_files)
 
 
 def get_adventure_island_info(authorization):
@@ -232,7 +230,6 @@ def make_rewards_box(rewards: [], grades: []):
         reward_image = get_image(reward)
         if reward_image is None:
             url = get_image_url(reward)
-            print(url)
             urllib.request.urlretrieve(url, f"{path}/data/resource/{reward}.png")
             reward_image = get_image(reward)
 
